@@ -25,5 +25,7 @@ namespace TrainingAPI.Services
         Task<TrainingParticipant> UpdateParticipantStatusAsync(int userId, int sessionId, string status);
         
         Task<object> GetDashboardStatsAsync(string role, int? userId = null);
+        Task<IEnumerable<TrainingSession>> GetRegisteredSessionsByUserAsync(int userId);
+
     }
 } 

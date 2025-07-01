@@ -1,341 +1,237 @@
-using Dapper;
-using MySql.Data.MySqlClient;
-using Microsoft.Extensions.Configuration;
 using TrainingAPI.Models;
 
 namespace TrainingAPI.Services
 {
     public class TrainingService : ITrainingService
     {
-        private readonly string _connectionString;
+        private readonly string _requestsFile = "MockData/trainingrequests.json";
+        private readonly string _sessionsFile = "MockData/trainingsessions.json";
+        private readonly string _participantsFile = "MockData/trainingparticipants.json";
         private readonly ILogger<TrainingService> _logger;
 
-        public TrainingService(IConfiguration configuration, ILogger<TrainingService> logger)
+        public TrainingService(ILogger<TrainingService> logger)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection");
             _logger = logger;
         }
 
         // Training Requests
         public async Task<IEnumerable<TrainingRequest>> GetAllTrainingRequestsAsync()
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var sql = @"
-                SELECT r.*, u.Name as RequesterName, u.Email as RequesterEmail 
-                FROM TrainingRequests r 
-                INNER JOIN Users u ON r.RequesterId = u.Id 
-                ORDER BY r.CreatedAt DESC";
-            return await connection.QueryAsync<TrainingRequest>(sql);
+            return await JsonFileHelper.ReadListAsync<TrainingRequest>(_requestsFile);
         }
 
         public async Task<TrainingRequest?> GetTrainingRequestByIdAsync(int id)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var sql = @"
-                SELECT r.*, u.Name as RequesterName, u.Email as RequesterEmail 
-                FROM TrainingRequests r 
-                INNER JOIN Users u ON r.RequesterId = u.Id 
-                WHERE r.Id = @Id";
-            return await connection.QuerySingleOrDefaultAsync<TrainingRequest>(sql, new { Id = id });
+            var requests = await JsonFileHelper.ReadListAsync<TrainingRequest>(_requestsFile);
+            return requests.FirstOrDefault(r => r.Id == id);
         }
 
         public async Task<IEnumerable<TrainingRequest>> GetTrainingRequestsByUserAsync(int userId)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var sql = @"
-                SELECT r.*, u.Name as RequesterName, u.Email as RequesterEmail 
-                FROM TrainingRequests r 
-                INNER JOIN Users u ON r.RequesterId = u.Id 
-                WHERE r.RequesterId = @UserId 
-                ORDER BY r.CreatedAt DESC";
-            return await connection.QueryAsync<TrainingRequest>(sql, new { UserId = userId });
+            var requests = await JsonFileHelper.ReadListAsync<TrainingRequest>(_requestsFile);
+            return requests.Where(r => r.RequesterId == userId);
         }
 
         public async Task<IEnumerable<TrainingRequest>> GetTrainingRequestsByStatusAsync(string status)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var sql = @"
-                SELECT r.*, u.Name as RequesterName, u.Email as RequesterEmail 
-                FROM TrainingRequests r 
-                INNER JOIN Users u ON r.RequesterId = u.Id 
-                WHERE r.Status = @Status 
-                ORDER BY r.CreatedAt DESC";
-            return await connection.QueryAsync<TrainingRequest>(sql, new { Status = status });
+            var requests = await JsonFileHelper.ReadListAsync<TrainingRequest>(_requestsFile);
+            return requests.Where(r => r.Status == status);
         }
 
         public async Task<TrainingRequest> CreateTrainingRequestAsync(TrainingRequest request)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var sql = @"
-                INSERT INTO TrainingRequests (Title, Department, TrainingType, Status, CreatedAt, RequesterId) 
-                VALUES (@Title, @Department, @TrainingType, @Status, @CreatedAt, @RequesterId);
-                SELECT LAST_INSERT_ID()";
-
-            var id = await connection.ExecuteScalarAsync<int>(sql, new
-            {
-                request.Title,
-                request.Department,
-                request.TrainingType,
-                Status = "pending",
-                CreatedAt = DateTime.UtcNow,
-                request.RequesterId
-            });
-
-            request.Id = id;
+            var requests = await JsonFileHelper.ReadListAsync<TrainingRequest>(_requestsFile);
+            request.Id = requests.Any() ? requests.Max(r => r.Id) + 1 : 1;
             request.Status = "pending";
             request.CreatedAt = DateTime.UtcNow;
+            requests.Add(request);
+            await JsonFileHelper.WriteListAsync(_requestsFile, requests);
             return request;
         }
 
         public async Task<TrainingRequest> UpdateTrainingRequestStatusAsync(int id, string status)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var sql = @"
-                UPDATE TrainingRequests 
-                SET Status = @Status, UpdatedAt = @UpdatedAt 
-                WHERE Id = @Id";
-
-            var rowsAffected = await connection.ExecuteAsync(sql, new
-            {
-                Id = id,
-                Status = status,
-                UpdatedAt = DateTime.UtcNow
-            });
-
-            if (rowsAffected == 0)
-                throw new ArgumentException("Training request not found");
-
-            var request = await GetTrainingRequestByIdAsync(id);
-            if (request == null)
-                throw new ArgumentException("Training request not found");
-
-            request.Status = status;
-            request.UpdatedAt = DateTime.UtcNow;
-            return request;
+            var requests = await JsonFileHelper.ReadListAsync<TrainingRequest>(_requestsFile);
+            var idx = requests.FindIndex(r => r.Id == id);
+            if (idx == -1) throw new ArgumentException("Training request not found");
+            requests[idx].Status = status;
+            requests[idx].UpdatedAt = DateTime.UtcNow;
+            await JsonFileHelper.WriteListAsync(_requestsFile, requests);
+            return requests[idx];
         }
 
         public async Task<bool> DeleteTrainingRequestAsync(int id)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var sql = "DELETE FROM TrainingRequests WHERE Id = @Id";
-            var rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
-            return rowsAffected > 0;
+            var requests = await JsonFileHelper.ReadListAsync<TrainingRequest>(_requestsFile);
+            var req = requests.FirstOrDefault(r => r.Id == id);
+            if (req == null) return false;
+            requests.Remove(req);
+            await JsonFileHelper.WriteListAsync(_requestsFile, requests);
+            return true;
         }
 
         // Training Sessions
         public async Task<IEnumerable<TrainingSession>> GetAllTrainingSessionsAsync()
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var sql = "SELECT * FROM TrainingSessions ORDER BY StartDate";
-            return await connection.QueryAsync<TrainingSession>(sql);
+            return await JsonFileHelper.ReadListAsync<TrainingSession>(_sessionsFile);
         }
 
         public async Task<TrainingSession?> GetTrainingSessionByIdAsync(int id)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var sql = "SELECT * FROM TrainingSessions WHERE Id = @Id";
-            return await connection.QuerySingleOrDefaultAsync<TrainingSession>(sql, new { Id = id });
+            var sessions = await JsonFileHelper.ReadListAsync<TrainingSession>(_sessionsFile);
+            return sessions.FirstOrDefault(s => s.Id == id);
         }
 
         public async Task<IEnumerable<TrainingSession>> GetTrainingSessionsByRequestAsync(int requestId)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var sql = @"
-                SELECT s.* FROM TrainingSessions s 
-                INNER JOIN TrainingRequests r ON s.Id = r.TrainingSessionId 
-                WHERE r.Id = @RequestId 
-                ORDER BY s.StartDate";
-            return await connection.QueryAsync<TrainingSession>(sql, new { RequestId = requestId });
+            var sessions = await JsonFileHelper.ReadListAsync<TrainingSession>(_sessionsFile);
+            var requests = await JsonFileHelper.ReadListAsync<TrainingRequest>(_requestsFile);
+            var sessionIds = requests.Where(r => r.Id == requestId && r.TrainingSessionId.HasValue).Select(r => r.TrainingSessionId.Value);
+            return sessions.Where(s => sessionIds.Contains(s.Id));
         }
 
         public async Task<TrainingSession> CreateTrainingSessionAsync(TrainingSession session)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var sql = @"
-                INSERT INTO TrainingSessions (Title, StartDate, EndDate, Trainer, Location, Description, Status, MaxParticipants, CurrentParticipants, CreatedAt) 
-                VALUES (@Title, @StartDate, @EndDate, @Trainer, @Location, @Description, @Status, @MaxParticipants, @CurrentParticipants, @CreatedAt);
-                SELECT LAST_INSERT_ID()";
-
-            var id = await connection.ExecuteScalarAsync<int>(sql, new
-            {
-                session.Title,
-                session.StartDate,
-                session.EndDate,
-                session.Trainer,
-                session.Location,
-                session.Description,
-                Status = "scheduled",
-                session.MaxParticipants,
-                CurrentParticipants = 0,
-                CreatedAt = DateTime.UtcNow
-            });
-
-            session.Id = id;
+            var sessions = await JsonFileHelper.ReadListAsync<TrainingSession>(_sessionsFile);
+            session.Id = sessions.Any() ? sessions.Max(s => s.Id) + 1 : 1;
             session.Status = "scheduled";
             session.CurrentParticipants = 0;
             session.CreatedAt = DateTime.UtcNow;
+            sessions.Add(session);
+            await JsonFileHelper.WriteListAsync(_sessionsFile, sessions);
             return session;
         }
 
         public async Task<TrainingSession> UpdateTrainingSessionAsync(TrainingSession session)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var sql = @"
-                UPDATE TrainingSessions 
-                SET Title = @Title, StartDate = @StartDate, EndDate = @EndDate, Trainer = @Trainer, 
-                    Location = @Location, Description = @Description, Status = @Status, 
-                    MaxParticipants = @MaxParticipants, CurrentParticipants = @CurrentParticipants, 
-                    UpdatedAt = @UpdatedAt 
-                WHERE Id = @Id";
-
-            var rowsAffected = await connection.ExecuteAsync(sql, new
-            {
-                session.Id,
-                session.Title,
-                session.StartDate,
-                session.EndDate,
-                session.Trainer,
-                session.Location,
-                session.Description,
-                session.Status,
-                session.MaxParticipants,
-                session.CurrentParticipants,
-                UpdatedAt = DateTime.UtcNow
-            });
-
-            if (rowsAffected == 0)
-                throw new ArgumentException("Training session not found");
-
+            var sessions = await JsonFileHelper.ReadListAsync<TrainingSession>(_sessionsFile);
+            var idx = sessions.FindIndex(s => s.Id == session.Id);
+            if (idx == -1) throw new ArgumentException("Session not found");
             session.UpdatedAt = DateTime.UtcNow;
+            sessions[idx] = session;
+            await JsonFileHelper.WriteListAsync(_sessionsFile, sessions);
             return session;
         }
 
         public async Task<bool> DeleteTrainingSessionAsync(int id)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var sql = "DELETE FROM TrainingSessions WHERE Id = @Id";
-            var rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
-            return rowsAffected > 0;
+            var sessions = await JsonFileHelper.ReadListAsync<TrainingSession>(_sessionsFile);
+            var session = sessions.FirstOrDefault(s => s.Id == id);
+            if (session == null) return false;
+            sessions.Remove(session);
+            await JsonFileHelper.WriteListAsync(_sessionsFile, sessions);
+            return true;
         }
 
-        // Training Participants
+        // Participants
         public async Task<IEnumerable<TrainingParticipant>> GetSessionParticipantsAsync(int sessionId)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var sql = @"
-                SELECT p.*, u.Name as UserName, u.Email as UserEmail 
-                FROM TrainingParticipants p 
-                INNER JOIN Users u ON p.UserId = u.Id 
-                WHERE p.TrainingSessionId = @SessionId 
-                ORDER BY p.RegisteredAt";
-            return await connection.QueryAsync<TrainingParticipant>(sql, new { SessionId = sessionId });
+            var participants = await JsonFileHelper.ReadListAsync<TrainingParticipant>(_participantsFile);
+            return participants.Where(p => p.TrainingSessionId == sessionId);
         }
 
         public async Task<TrainingParticipant> RegisterForSessionAsync(int userId, int sessionId)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            
-            // Check if user is already registered
-            var existingRegistration = await connection.QuerySingleOrDefaultAsync<TrainingParticipant>(
-                "SELECT * FROM TrainingParticipants WHERE UserId = @UserId AND TrainingSessionId = @SessionId",
-                new { UserId = userId, SessionId = sessionId });
-
-            if (existingRegistration != null)
-                throw new InvalidOperationException("User is already registered for this session");
-
-            // Check if session is full
-            var session = await GetTrainingSessionByIdAsync(sessionId);
-            if (session == null)
-                throw new ArgumentException("Training session not found");
-
-            if (session.CurrentParticipants >= session.MaxParticipants)
-                throw new InvalidOperationException("Training session is full");
-
-            var sql = @"
-                INSERT INTO TrainingParticipants (UserId, TrainingSessionId, Status, RegisteredAt) 
-                VALUES (@UserId, @SessionId, @Status, @RegisteredAt);
-                SELECT LAST_INSERT_ID()";
-
-            var id = await connection.ExecuteScalarAsync<int>(sql, new
+            var participants = await JsonFileHelper.ReadListAsync<TrainingParticipant>(_participantsFile);
+            var participant = new TrainingParticipant
             {
-                UserId = userId,
-                SessionId = sessionId,
-                Status = "registered",
-                RegisteredAt = DateTime.UtcNow
-            });
-
-            // Update session participant count
-            await connection.ExecuteAsync(
-                "UPDATE TrainingSessions SET CurrentParticipants = CurrentParticipants + 1 WHERE Id = @Id",
-                new { Id = sessionId });
-
-            return new TrainingParticipant
-            {
-                Id = id,
+                Id = participants.Any() ? participants.Max(p => p.Id) + 1 : 1,
                 UserId = userId,
                 TrainingSessionId = sessionId,
                 Status = "registered",
                 RegisteredAt = DateTime.UtcNow
             };
+            participants.Add(participant);
+            await JsonFileHelper.WriteListAsync(_participantsFile, participants);
+            return participant;
         }
 
         public async Task<bool> UnregisterFromSessionAsync(int userId, int sessionId)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var sql = "DELETE FROM TrainingParticipants WHERE UserId = @UserId AND TrainingSessionId = @SessionId";
-            var rowsAffected = await connection.ExecuteAsync(sql, new { UserId = userId, SessionId = sessionId });
-            
-            if (rowsAffected > 0)
-            {
-                // Update session participant count
-                await connection.ExecuteAsync(
-                    "UPDATE TrainingSessions SET CurrentParticipants = CurrentParticipants - 1 WHERE Id = @Id",
-                    new { Id = sessionId });
-            }
-            
-            return rowsAffected > 0;
+            var participants = await JsonFileHelper.ReadListAsync<TrainingParticipant>(_participantsFile);
+            var participant = participants.FirstOrDefault(p => p.UserId == userId && p.TrainingSessionId == sessionId);
+            if (participant == null) return false;
+            participants.Remove(participant);
+            await JsonFileHelper.WriteListAsync(_participantsFile, participants);
+            return true;
         }
 
         public async Task<TrainingParticipant> UpdateParticipantStatusAsync(int userId, int sessionId, string status)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var sql = @"
-                UPDATE TrainingParticipants 
-                SET Status = @Status, AttendedAt = @AttendedAt 
-                WHERE UserId = @UserId AND TrainingSessionId = @SessionId";
-
-            var rowsAffected = await connection.ExecuteAsync(sql, new
-            {
-                UserId = userId,
-                SessionId = sessionId,
-                Status = status,
-                AttendedAt = status == "attended" ? DateTime.UtcNow : (DateTime?)null
-            });
-
-            if (rowsAffected == 0)
-                throw new ArgumentException("Participant registration not found");
-
-            return await connection.QuerySingleOrDefaultAsync<TrainingParticipant>(
-                "SELECT * FROM TrainingParticipants WHERE UserId = @UserId AND TrainingSessionId = @SessionId",
-                new { UserId = userId, SessionId = sessionId });
+            var participants = await JsonFileHelper.ReadListAsync<TrainingParticipant>(_participantsFile);
+            var idx = participants.FindIndex(p => p.UserId == userId && p.TrainingSessionId == sessionId);
+            if (idx == -1) throw new ArgumentException("Participant not found");
+            participants[idx].Status = status;
+            if (status == "attended")
+                participants[idx].AttendedAt = DateTime.UtcNow;
+            await JsonFileHelper.WriteListAsync(_participantsFile, participants);
+            return participants[idx];
         }
 
-        // Dashboard Statistics
         public async Task<object> GetDashboardStatsAsync(string role, int? userId = null)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            
-            var stats = new
-            {
-                TotalUsers = await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM Users WHERE IsActive = 1"),
-                TotalTrainingRequests = await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM TrainingRequests"),
-                TotalTrainingSessions = await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM TrainingSessions"),
-                PendingRequests = await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM TrainingRequests WHERE Status = 'pending'"),
-                UpcomingSessions = await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM TrainingSessions WHERE StartDate > NOW() AND Status = 'scheduled'"),
-                ActiveParticipants = await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM TrainingParticipants WHERE Status = 'registered'")
-            };
+            var users = await JsonFileHelper.ReadListAsync<User>("MockData/users.json");
+            var requests = await JsonFileHelper.ReadListAsync<TrainingRequest>("MockData/trainingrequests.json");
+            var sessions = await JsonFileHelper.ReadListAsync<TrainingSession>("MockData/trainingsessions.json");
+            var participants = await JsonFileHelper.ReadListAsync<TrainingParticipant>("MockData/trainingparticipants.json");
 
-            return stats;
+            if (role != null && role.ToLower().Contains("employee") && userId.HasValue)
+            {
+                // Employee-specific stats
+                var myRequests = requests.Where(r => r.RequesterId == userId.Value).ToList();
+                var myParticipants = participants.Where(p => p.UserId == userId.Value).ToList();
+                var mySessionsRegistered = myParticipants.Count;
+                var mySessionsAttended = myParticipants.Count(p => p.Status == "attended");
+                var myUpcomingSessions = myParticipants
+                    .Join(sessions, p => p.TrainingSessionId, s => s.Id, (p, s) => new { p, s })
+                    .Count(x => x.s.StartDate > DateTime.UtcNow && x.s.Status == "scheduled");
+
+                return new
+                {
+                    MyTrainingRequests = myRequests.Count,
+                    MySessionsRegistered = mySessionsRegistered,
+                    MySessionsAttended = mySessionsAttended,
+                    MyUpcomingSessions = myUpcomingSessions
+                };
+            }
+            else if (role != null && (role.ToLower().Contains("l&d") || role.ToLower().Contains("ld")))
+            {
+                // L&D department: overall stats
+                return new
+                {
+                    TotalUsers = users.Count(u => u.IsActive),
+                    TotalTrainingRequests = requests.Count(),
+                    TotalTrainingSessions = sessions.Count(),
+                    PendingRequests = requests.Count(r => r.Status == "pending"),
+                    UpcomingSessions = sessions.Count(s => s.StartDate > DateTime.UtcNow && s.Status == "scheduled"),
+                    ActiveParticipants = participants.Count(p => p.Status == "registered")
+                };
+            }
+            else
+            {
+                // Default: overall stats
+                return new
+                {
+                    TotalUsers = users.Count(u => u.IsActive),
+                    TotalTrainingRequests = requests.Count(),
+                    TotalTrainingSessions = sessions.Count(),
+                    PendingRequests = requests.Count(r => r.Status == "pending"),
+                    UpcomingSessions = sessions.Count(s => s.StartDate > DateTime.UtcNow && s.Status == "scheduled"),
+                    ActiveParticipants = participants.Count(p => p.Status == "registered")
+                };
+            }
+        }
+
+        public async Task<IEnumerable<TrainingSession>> GetRegisteredSessionsByUserAsync(int userId)
+        {
+            var participants = await JsonFileHelper.ReadListAsync<TrainingParticipant>(_participantsFile);
+            var sessions = await JsonFileHelper.ReadListAsync<TrainingSession>(_sessionsFile);
+            var registeredSessionIds = participants
+                .Where(p => p.UserId == userId && (p.Status == "registered" || p.Status == "attended"))
+                .Select(p => p.TrainingSessionId)
+                .Distinct()
+                .ToList();
+            return sessions.Where(s => registeredSessionIds.Contains(s.Id));
         }
     }
 } 

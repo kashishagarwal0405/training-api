@@ -1,0 +1,37 @@
+[
+  {
+    "Id": 1,
+    "TrainingSessionId": 1,
+    "UserId": 1,
+    "AttendedAt": "2024-06-10T17:00:00Z",
+    "Status": "present"
+  },
+  {
+    "Id": 2,
+    "TrainingSessionId": 2,
+    "UserId": 2,
+    "AttendedAt": "2024-06-15T12:00:00Z",
+    "Status": "present"
+  },
+  {
+    "Id": 3,
+    "TrainingSessionId": 3,
+    "UserId": 3,
+    "AttendedAt": "2024-06-20T17:00:00Z",
+    "Status": "present"
+  },
+  {
+    "Id": 4,
+    "TrainingSessionId": 4,
+    "UserId": 4,
+    "AttendedAt": null,
+    "Status": "absent"
+  },
+  {
+    "Id": 5,
+    "TrainingSessionId": 2,
+    "UserId": 5,
+    "AttendedAt": null,
+    "Status": "absent"
+  }
+] 

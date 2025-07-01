@@ -1,231 +1,133 @@
-using Dapper;
-using MySql.Data.MySqlClient;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+using TrainingAPI.Models;
 
 namespace TrainingAPI.Services
 {
     public class ReportService : IReportService
     {
-        private readonly string _connectionString;
+        private readonly string _requestsFile = "MockData/trainingrequests.json";
+        private readonly string _usersFile = "MockData/users.json";
+        private readonly string _sessionsFile = "MockData/trainingsessions.json";
+        private readonly string _participantsFile = "MockData/trainingparticipants.json";
+        private readonly string _attendanceFile = "MockData/attendance.json";
         private readonly ILogger<ReportService> _logger;
 
-        public ReportService(IConfiguration configuration, ILogger<ReportService> logger)
+        public ReportService(ILogger<ReportService> logger)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection");
             _logger = logger;
         }
 
         public async Task<IEnumerable<object>> GetTrainingRequestReportAsync(DateTime? startDate = null, DateTime? endDate = null)
         {
-            try
-            {
-                using var connection = new MySqlConnection(_connectionString);
-                var sql = @"
-                    SELECT 
-                        COUNT(*) as TotalRequests,
-                        Status,
-                        Department,
-                        TrainingType,
-                        DATE_FORMAT(CreatedAt, '%Y-%m') as Month
-                    FROM TrainingRequests 
-                    WHERE (@StartDate IS NULL OR CreatedAt >= @StartDate)
-                      AND (@EndDate IS NULL OR CreatedAt <= @EndDate)
-                    GROUP BY Status, Department, TrainingType, DATE_FORMAT(CreatedAt, '%Y-%m')
-                    ORDER BY Month";
-
-                return await connection.QueryAsync<object>(sql, new
-                {
-                    StartDate = startDate,
-                    EndDate = endDate
+            var requests = await JsonFileHelper.ReadListAsync<TrainingRequest>(_requestsFile);
+            var filtered = requests
+                .Where(r => (!startDate.HasValue || r.CreatedAt >= startDate) && (!endDate.HasValue || r.CreatedAt <= endDate))
+                .GroupBy(r => new { r.Status, r.Department, r.TrainingType, Month = r.CreatedAt.ToString("yyyy-MM") })
+                .Select(g => new {
+                    TotalRequests = g.Count(),
+                    g.Key.Status,
+                    g.Key.Department,
+                    g.Key.TrainingType,
+                    g.Key.Month
                 });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting training request report");
-                throw;
-            }
+            return filtered.ToList();
         }
 
         public async Task<IEnumerable<object>> GetDepartmentReportAsync()
         {
-            try
-            {
-                using var connection = new MySqlConnection(_connectionString);
-                var sql = @"
-                    SELECT 
-                        u.Department,
-                        COUNT(u.Id) as UserCount,
-                        COUNT(r.Id) as RequestCount,
-                        COUNT(CASE WHEN u.IsActive = 1 THEN 1 END) as ActiveUsers,
-                        COUNT(DISTINCT r.TrainingType) as TrainingTypes
-                    FROM Users u
-                    LEFT JOIN TrainingRequests r ON u.Department = r.Department
-                    GROUP BY u.Department
-                    ORDER BY u.Department";
-
-                return await connection.QueryAsync<object>(sql);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting department report");
-                throw;
-            }
+            var users = await JsonFileHelper.ReadListAsync<User>(_usersFile);
+            var requests = await JsonFileHelper.ReadListAsync<TrainingRequest>(_requestsFile);
+            var report = users.GroupBy(u => u.Department)
+                .Select(g => new {
+                    Department = g.Key,
+                    UserCount = g.Count(),
+                    RequestCount = requests.Count(r => r.Department == g.Key),
+                    ActiveUsers = g.Count(u => u.IsActive),
+                    TrainingTypes = requests.Where(r => r.Department == g.Key).Select(r => r.TrainingType).Distinct().Count()
+                });
+            return report.ToList();
         }
 
         public async Task<IEnumerable<object>> GetBudgetReportAsync()
         {
-            try
-            {
-                using var connection = new MySqlConnection(_connectionString);
-                // Since Budget field was removed, we'll provide a placeholder report
-                // or you can remove this method entirely if budget tracking is not needed
-                var sql = @"
-                    SELECT 
-                        'Budget tracking not available in current schema' as Message,
-                        COUNT(*) as TotalRequests,
-                        Department,
-                        Status
-                    FROM TrainingRequests 
-                    GROUP BY Department, Status";
-
-                return await connection.QueryAsync<object>(sql);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting budget report");
-                throw;
-            }
+            var requests = await JsonFileHelper.ReadListAsync<TrainingRequest>(_requestsFile);
+            var report = requests.GroupBy(r => new { r.Department, r.Status })
+                .Select(g => new {
+                    Message = "Budget tracking not available in current schema",
+                    TotalRequests = g.Count(),
+                    g.Key.Department,
+                    g.Key.Status
+                });
+            return report.ToList();
         }
 
         public async Task<object> GetTrainingSessionReportAsync(DateTime? startDate = null, DateTime? endDate = null)
         {
-            try
-            {
-                using var connection = new MySqlConnection(_connectionString);
-                var sql = @"
-                    SELECT 
-                        COUNT(*) as TotalSessions,
-                        Status,
-                        Trainer,
-                        AVG(CAST(CurrentParticipants AS DECIMAL(10,2))) as AverageParticipants,
-                        SUM(CurrentParticipants) as TotalParticipants,
-                        COUNT(CASE WHEN StartDate > NOW() THEN 1 END) as UpcomingSessions,
-                        COUNT(CASE WHEN EndDate < NOW() THEN 1 END) as CompletedSessions
-                    FROM TrainingSessions 
-                    WHERE (@StartDate IS NULL OR StartDate >= @StartDate)
-                      AND (@EndDate IS NULL OR EndDate <= @EndDate)
-                    GROUP BY Status, Trainer";
-
-                var results = await connection.QueryAsync<object>(sql, new
-                {
-                    StartDate = startDate,
-                    EndDate = endDate
+            var sessions = await JsonFileHelper.ReadListAsync<TrainingSession>(_sessionsFile);
+            var filtered = sessions
+                .Where(s => (!startDate.HasValue || s.StartDate >= startDate) && (!endDate.HasValue || s.EndDate <= endDate))
+                .GroupBy(s => new { s.Status, s.Trainer })
+                .Select(g => new {
+                    TotalSessions = g.Count(),
+                    g.Key.Status,
+                    g.Key.Trainer,
+                    AverageParticipants = g.Average(s => s.CurrentParticipants),
+                    TotalParticipants = g.Sum(s => s.CurrentParticipants),
+                    UpcomingSessions = g.Count(s => s.StartDate > DateTime.Now),
+                    CompletedSessions = g.Count(s => s.EndDate < DateTime.Now)
                 });
-
-                return results;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting training session report");
-                throw;
-            }
+            return filtered.ToList();
         }
 
         public async Task<object> GetUserParticipationReportAsync(int? userId = null)
         {
-            try
-            {
-                using var connection = new MySqlConnection(_connectionString);
-                var sql = @"
-                    SELECT 
-                        COUNT(*) as TotalRegistrations,
-                        p.Status,
-                        u.Id as UserId,
-                        u.Name as UserName,
-                        u.Department,
-                        COUNT(*) as RegistrationCount,
-                        COUNT(CASE WHEN p.Status = 'attended' THEN 1 END) as AttendedCount,
-                        COUNT(CASE WHEN p.Status = 'registered' THEN 1 END) as RegisteredCount
-                    FROM TrainingParticipants p
-                    INNER JOIN Users u ON p.UserId = u.Id
-                    WHERE (@UserId IS NULL OR p.UserId = @UserId)
-                    GROUP BY p.Status, u.Id, u.Name, u.Department
-                    ORDER BY RegistrationCount DESC";
-
-                var results = await connection.QueryAsync<object>(sql, new
-                {
-                    UserId = userId
+            var participants = await JsonFileHelper.ReadListAsync<TrainingParticipant>(_participantsFile);
+            var users = await JsonFileHelper.ReadListAsync<User>(_usersFile);
+            var filtered = participants
+                .Where(p => !userId.HasValue || p.UserId == userId)
+                .GroupBy(p => new { p.Status, p.UserId })
+                .Select(g => new {
+                    TotalRegistrations = g.Count(),
+                    g.Key.Status,
+                    UserId = g.Key.UserId,
+                    UserName = users.FirstOrDefault(u => u.Id == g.Key.UserId)?.Name,
+                    Department = users.FirstOrDefault(u => u.Id == g.Key.UserId)?.Department,
+                    RegistrationCount = g.Count(),
+                    AttendedCount = g.Count(p => p.Status == "attended"),
+                    RegisteredCount = g.Count(p => p.Status == "registered")
                 });
-
-                return results;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting user participation report");
-                throw;
-            }
+            return filtered.ToList();
         }
 
-        // New method to get attendance report
         public async Task<IEnumerable<object>> GetAttendanceReportAsync(DateTime? startDate = null, DateTime? endDate = null)
         {
-            try
-            {
-                using var connection = new MySqlConnection(_connectionString);
-                var sql = @"
-                    SELECT 
-                        ts.Title as SessionTitle,
-                        ts.Trainer,
-                        COUNT(a.Id) as TotalAttendance,
-                        COUNT(CASE WHEN a.Status = 'present' THEN 1 END) as PresentCount,
-                        COUNT(CASE WHEN a.Status = 'absent' THEN 1 END) as AbsentCount,
-                        ROUND((COUNT(CASE WHEN a.Status = 'present' THEN 1 END) * 100.0 / COUNT(a.Id)), 2) as AttendanceRate
-                    FROM TrainingSessions ts
-                    LEFT JOIN Attendance a ON ts.Id = a.TrainingSessionId
-                    WHERE (@StartDate IS NULL OR ts.StartDate >= @StartDate)
-                      AND (@EndDate IS NULL OR ts.EndDate <= @EndDate)
-                    GROUP BY ts.Id, ts.Title, ts.Trainer
-                    ORDER BY ts.StartDate DESC";
-
-                return await connection.QueryAsync<object>(sql, new
-                {
-                    StartDate = startDate,
-                    EndDate = endDate
+            var sessions = await JsonFileHelper.ReadListAsync<TrainingSession>(_sessionsFile);
+            var attendance = await JsonFileHelper.ReadListAsync<Attendance>(_attendanceFile);
+            var filtered = sessions
+                .Where(ts => (!startDate.HasValue || ts.StartDate >= startDate) && (!endDate.HasValue || ts.EndDate <= endDate))
+                .GroupJoin(attendance, ts => ts.Id, a => a.TrainingSessionId, (ts, aList) => new { ts, aList })
+                .Select(x => new {
+                    SessionTitle = x.ts.Title,
+                    x.ts.Trainer,
+                    TotalAttendance = x.aList.Count(),
+                    PresentCount = x.aList.Count(a => a.Status == "present"),
+                    AbsentCount = x.aList.Count(a => a.Status == "absent"),
+                    AttendanceRate = x.aList.Any() ? Math.Round(x.aList.Count(a => a.Status == "present") * 100.0 / x.aList.Count(), 2) : 0
                 });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting attendance report");
-                throw;
-            }
+            return filtered.ToList();
         }
 
-        // New method to get trainer performance report
         public async Task<IEnumerable<object>> GetTrainerPerformanceReportAsync()
         {
-            try
-            {
-                using var connection = new MySqlConnection(_connectionString);
-                var sql = @"
-                    SELECT 
-                        ts.Trainer,
-                        COUNT(ts.Id) as TotalSessions,
-                        COUNT(CASE WHEN ts.Status = 'completed' THEN 1 END) as CompletedSessions,
-                        AVG(ts.CurrentParticipants) as AverageParticipants,
-                        SUM(ts.CurrentParticipants) as TotalParticipants,
-                        COUNT(DISTINCT ts.Id) as UniqueSessions
-                    FROM TrainingSessions ts
-                    GROUP BY ts.Trainer
-                    ORDER BY TotalSessions DESC";
-
-                return await connection.QueryAsync<object>(sql);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting trainer performance report");
-                throw;
-            }
+            var sessions = await JsonFileHelper.ReadListAsync<TrainingSession>(_sessionsFile);
+            var attendance = await JsonFileHelper.ReadListAsync<Attendance>(_attendanceFile);
+            var report = sessions.GroupBy(s => s.Trainer)
+                .Select(g => new {
+                    Trainer = g.Key,
+                    TotalSessions = g.Count(),
+                    AverageAttendance = g.Average(s => attendance.Count(a => a.TrainingSessionId == s.Id && a.Status == "present")),
+                    TotalAttendance = g.Sum(s => attendance.Count(a => a.TrainingSessionId == s.Id && a.Status == "present"))
+                });
+            return report.ToList();
         }
     }
 } 

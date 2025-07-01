@@ -65,7 +65,20 @@ namespace TrainingAPI.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
-
+        [HttpGet("sessions")]
+        public async Task<ActionResult<IEnumerable<TrainingSession>>> GetAllTrainingSessions()
+        {
+            try
+            {
+                var sessions = await _trainingService.GetAllTrainingSessionsAsync();
+                return Ok(sessions);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting all training sessions");
+                return StatusCode(500, "Internal server error");
+            }
+        }
         [HttpGet("requests/status/{status}")]
         public async Task<ActionResult<IEnumerable<TrainingRequest>>> GetTrainingRequestsByStatus(string status)
         {
@@ -134,17 +147,17 @@ namespace TrainingAPI.Controllers
         }
 
         // Training Sessions
-        [HttpGet("sessions")]
-        public async Task<ActionResult<IEnumerable<TrainingSession>>> GetAllTrainingSessions()
+        [HttpGet("sessions/registered/{userId}")]
+        public async Task<ActionResult<IEnumerable<TrainingSession>>> GetRegisteredSessionsByUser(int userId)
         {
             try
             {
-                var sessions = await _trainingService.GetAllTrainingSessionsAsync();
+                var sessions = await _trainingService.GetRegisteredSessionsByUserAsync(userId);
                 return Ok(sessions);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting all training sessions");
+                _logger.LogError(ex, "Error getting registered sessions for user {UserId}", userId);
                 return StatusCode(500, "Internal server error");
             }
         }

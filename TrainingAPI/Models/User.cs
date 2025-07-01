@@ -14,7 +14,7 @@ namespace TrainingAPI.Models
         [EmailAddress]
         [StringLength(100)]
         public string Email { get; set; } = string.Empty;
-        
+        public string PasswordHash { get; set; } = string.Empty;
         [Required]
         [StringLength(50)]
         public string Department { get; set; } = string.Empty;
@@ -26,6 +26,6 @@ namespace TrainingAPI.Models
         
         // Navigation properties
         public ICollection<TrainingRequest> TrainingRequests { get; set; } = new List<TrainingRequest>();
-        public Role? Role { get; set; }
+        public string? Role { get; set; }
     }
 } 

@@ -24,7 +24,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<ITrainingService, TrainingService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IReportService, ReportService>();
-
+builder.Services.AddScoped<IAuthService, AuthService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

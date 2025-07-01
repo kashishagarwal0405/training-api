@@ -1,0 +1,30 @@
+[
+  {
+    "Id": 1,
+    "Name": "C# Basics",
+    "Description": "Learn the basics of C# programming.",
+    "Department": "IT",
+    "IsActive": true
+  },
+  {
+    "Id": 2,
+    "Name": "HR Compliance",
+    "Description": "Mandatory HR compliance training.",
+    "Department": "HR",
+    "IsActive": true
+  },
+  {
+    "Id": 3,
+    "Name": "Excel Advanced",
+    "Description": "Advanced Excel for Finance.",
+    "Department": "Finance",
+    "IsActive": true
+  },
+  {
+    "Id": 4,
+    "Name": "Cloud Security",
+    "Description": "Cloud security best practices.",
+    "Department": "IT",
+    "IsActive": true
+  }
+] 

@@ -1,0 +1,82 @@
+[
+  {
+    "Id": 1,
+    "UserId": 1,
+    "TrainingSessionId": 1,
+    "Status": "registered",
+    "RegisteredAt": "2024-06-05T08:00:00Z",
+    "AttendedAt": null,
+    "User": null,
+    "TrainingSession": null
+  },
+  {
+    "Id": 0,
+    "UserId": 0,
+    "TrainingSessionId": 0,
+    "Status": "registered",
+    "RegisteredAt": "2025-06-30T10:16:57.3840629Z",
+    "AttendedAt": null,
+    "User": null,
+    "TrainingSession": null
+  },
+  {
+    "Id": 0,
+    "UserId": 0,
+    "TrainingSessionId": 0,
+    "Status": "registered",
+    "RegisteredAt": "2025-06-30T10:16:57.3840668Z",
+    "AttendedAt": null,
+    "User": null,
+    "TrainingSession": null
+  },
+  {
+    "Id": 2,
+    "UserId": 2,
+    "TrainingSessionId": 2,
+    "Status": "attended",
+    "RegisteredAt": "2024-06-06T08:00:00Z",
+    "AttendedAt": "2024-06-15T12:00:00Z",
+    "User": null,
+    "TrainingSession": null
+  },
+  {
+    "Id": 3,
+    "UserId": 3,
+    "TrainingSessionId": 3,
+    "Status": "attended",
+    "RegisteredAt": "2024-06-10T08:00:00Z",
+    "AttendedAt": "2024-06-20T17:00:00Z",
+    "User": null,
+    "TrainingSession": null
+  },
+  {
+    "Id": 4,
+    "UserId": 4,
+    "TrainingSessionId": 4,
+    "Status": "registered",
+    "RegisteredAt": "2024-06-12T08:00:00Z",
+    "AttendedAt": null,
+    "User": null,
+    "TrainingSession": null
+  },
+  {
+    "Id": 5,
+    "UserId": 5,
+    "TrainingSessionId": 2,
+    "Status": "registered",
+    "RegisteredAt": "2024-06-13T08:00:00Z",
+    "AttendedAt": null,
+    "User": null,
+    "TrainingSession": null
+  },
+  {
+    "Id": 6,
+    "UserId": 1,
+    "TrainingSessionId": 4,
+    "Status": "registered",
+    "RegisteredAt": "2025-06-30T10:16:57.3900014Z",
+    "AttendedAt": null,
+    "User": null,
+    "TrainingSession": null
+  }
+]
