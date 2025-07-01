@@ -233,5 +233,23 @@ namespace TrainingAPI.Services
                 .ToList();
             return sessions.Where(s => registeredSessionIds.Contains(s.Id));
         }
+        public async Task<IEnumerable<TrainingSession>> GetSessionsAsTrainerAsync(int userId)
+        {
+            var users = await JsonFileHelper.ReadListAsync<User>("MockData/users.json");
+            var sessions = await JsonFileHelper.ReadListAsync<TrainingSession>(_sessionsFile);
+            var user = users.FirstOrDefault(u => u.Id == userId);
+            if (user == null) return new List<TrainingSession>();
+            return sessions.Where(s => s.Trainer == user.Name);
+        }
+        public async Task<TrainingSession?> UpdateTrainerRequestStatusAsync(int sessionId, string status)
+        {
+            var sessions = await JsonFileHelper.ReadListAsync<TrainingSession>(_sessionsFile);
+            var idx = sessions.FindIndex(s => s.Id == sessionId);
+            if (idx == -1) return null;
+            sessions[idx].TrainerRequestStatus = status;
+            sessions[idx].UpdatedAt = DateTime.UtcNow;
+            await JsonFileHelper.WriteListAsync(_sessionsFile, sessions);
+            return sessions[idx];
+        }
     }
 } 

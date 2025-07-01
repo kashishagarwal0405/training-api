@@ -32,7 +32,7 @@ namespace TrainingAPI.Models
         
         public int MaxParticipants { get; set; }
         public int CurrentParticipants { get; set; } = 0;
-        
+        public string TrainerRequestStatus { get; set; } = "pending";
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         

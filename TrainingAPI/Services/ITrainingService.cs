@@ -26,6 +26,8 @@ namespace TrainingAPI.Services
         
         Task<object> GetDashboardStatsAsync(string role, int? userId = null);
         Task<IEnumerable<TrainingSession>> GetRegisteredSessionsByUserAsync(int userId);
+        Task<IEnumerable<TrainingSession>> GetSessionsAsTrainerAsync(int userId);
+        Task<TrainingSession?> UpdateTrainerRequestStatusAsync(int sessionId, string status);
 
     }
 } 

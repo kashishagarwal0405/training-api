@@ -7,7 +7,9 @@
     "Department": "IT",
     "RoleId": 1,
     "CreatedAt": "2024-06-01T12:00:00Z",
-    "IsActive": true
+    "IsActive": true,
+    "TrainingRequests": [],
+    "Role": null
   },
   {
     "Id": 2,
@@ -17,7 +19,9 @@
     "Department": "HR",
     "RoleId": 2,
     "CreatedAt": "2024-06-02T12:00:00Z",
-    "IsActive": true
+    "IsActive": true,
+    "TrainingRequests": [],
+    "Role": null
   },
   {
     "Id": 3,
@@ -27,7 +31,9 @@
     "Department": "Finance",
     "RoleId": 2,
     "CreatedAt": "2024-06-03T12:00:00Z",
-    "IsActive": true
+    "IsActive": true,
+    "TrainingRequests": [],
+    "Role": null
   },
   {
     "Id": 4,
@@ -37,16 +43,20 @@
     "Department": "IT",
     "RoleId": 3,
     "CreatedAt": "2024-06-04T12:00:00Z",
-    "IsActive": true
+    "IsActive": true,
+    "TrainingRequests": [],
+    "Role": null
   },
   {
     "Id": 5,
     "Name": "Eva Brown",
     "Email": "eva@example.com",
     "PasswordHash": "password5",
-    "Department": "L&D",
+    "Department": "L\u0026D",
     "RoleId": 3,
     "CreatedAt": "2024-06-05T12:00:00Z",
-    "IsActive": false
+    "IsActive": false,
+    "TrainingRequests": [],
+    "Role": null
   }
-] 
+]

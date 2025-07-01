@@ -345,5 +345,34 @@ namespace TrainingAPI.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
+        [HttpGet("sessions/as-trainer/{userId}")]
+        public async Task<ActionResult<IEnumerable<TrainingSession>>> GetSessionsAsTrainer(int userId)
+        {
+            try
+            {
+                var sessions = await _trainingService.GetSessionsAsTrainerAsync(userId);
+                return Ok(sessions);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting sessions as trainer for user {UserId}", userId);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+        [HttpPut("sessions/{id}/trainer-request-status")]
+        public async Task<IActionResult> UpdateTrainerRequestStatus(int id, [FromBody] string status)
+        {
+            try
+            {
+                var updated = await _trainingService.UpdateTrainerRequestStatusAsync(id, status);
+                if (updated == null) return NotFound();
+                return Ok(updated);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating trainer request status for session {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
     }
 } 
