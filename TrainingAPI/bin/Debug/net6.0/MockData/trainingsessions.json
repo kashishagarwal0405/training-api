@@ -10,9 +10,11 @@
     "Status": "scheduled",
     "MaxParticipants": 20,
     "CurrentParticipants": 10,
+    "TrainerRequestStatus": "pending",
     "CreatedAt": "2024-06-01T10:00:00Z",
     "UpdatedAt": null,
-    "TrainerRequestStatus": "pending"
+    "Participants": [],
+    "TrainingRequests": []
   },
   {
     "Id": 2,
@@ -25,8 +27,11 @@
     "Status": "scheduled",
     "MaxParticipants": 15,
     "CurrentParticipants": 2,
+    "TrainerRequestStatus": "pending",
     "CreatedAt": "2024-07-01T10:00:00Z",
-    "TrainerRequestStatus": "pending"
+    "UpdatedAt": null,
+    "Participants": [],
+    "TrainingRequests": []
   },
   {
     "Id": 3,
@@ -39,8 +44,11 @@
     "Status": "scheduled",
     "MaxParticipants": 25,
     "CurrentParticipants": 1,
+    "TrainerRequestStatus": "pending",
     "CreatedAt": "2024-07-15T10:00:00Z",
-    "TrainerRequestStatus": "pending"
+    "UpdatedAt": null,
+    "Participants": [],
+    "TrainingRequests": []
   },
   {
     "Id": 4,
@@ -53,9 +61,11 @@
     "Status": "scheduled",
     "MaxParticipants": 15,
     "CurrentParticipants": 8,
+    "TrainerRequestStatus": "pending",
     "CreatedAt": "2024-06-02T11:00:00Z",
     "UpdatedAt": null,
-    "TrainerRequestStatus": "pending"
+    "Participants": [],
+    "TrainingRequests": []
   },
   {
     "Id": 5,
@@ -68,9 +78,11 @@
     "Status": "completed",
     "MaxParticipants": 10,
     "CurrentParticipants": 10,
+    "TrainerRequestStatus": "pending",
     "CreatedAt": "2024-06-03T09:00:00Z",
     "UpdatedAt": "2024-06-20T18:00:00Z",
-    "TrainerRequestStatus": "pending"
+    "Participants": [],
+    "TrainingRequests": []
   },
   {
     "Id": 6,
@@ -83,9 +95,11 @@
     "Status": "scheduled",
     "MaxParticipants": 25,
     "CurrentParticipants": 5,
+    "TrainerRequestStatus": "pending",
     "CreatedAt": "2024-06-05T09:00:00Z",
     "UpdatedAt": null,
-    "TrainerRequestStatus": "pending"
+    "Participants": [],
+    "TrainingRequests": []
   },
   {
     "Id": 7,
@@ -98,7 +112,44 @@
     "Status": "scheduled",
     "MaxParticipants": 20,
     "CurrentParticipants": 0,
+    "TrainerRequestStatus": "pending",
     "CreatedAt": "2024-07-20T10:00:00Z",
-    "TrainerRequestStatus": "pending"
+    "UpdatedAt": "2025-07-02T11:29:06.6468943Z",
+    "Participants": [],
+    "TrainingRequests": []
+  },
+  {
+    "Id": 11,
+    "Title": "CLOUD",
+    "StartDate": "2025-07-19T19:25:00",
+    "EndDate": "2025-07-26T19:25:00",
+    "Trainer": "HUJ",
+    "Location": "MM",
+    "Description": null,
+    "Status": "scheduled",
+    "MaxParticipants": 0,
+    "CurrentParticipants": 0,
+    "TrainerRequestStatus": "pending",
+    "CreatedAt": "2025-07-02T13:55:56.4733798Z",
+    "UpdatedAt": null,
+    "Participants": [],
+    "TrainingRequests": []
+  },
+  {
+    "Id": 12,
+    "Title": "Angular",
+    "StartDate": "2025-07-12T19:48:00",
+    "EndDate": "2025-07-25T19:48:00",
+    "Trainer": "HUJ",
+    "Location": "MM",
+    "Description": null,
+    "Status": "scheduled",
+    "MaxParticipants": 0,
+    "CurrentParticipants": 0,
+    "TrainerRequestStatus": "pending",
+    "CreatedAt": "2025-07-02T14:18:31.7877222Z",
+    "UpdatedAt": null,
+    "Participants": [],
+    "TrainingRequests": []
   }
-] 
+]

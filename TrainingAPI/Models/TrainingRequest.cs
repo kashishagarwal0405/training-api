@@ -28,7 +28,7 @@ namespace TrainingAPI.Models
         // Foreign keys
         public int RequesterId { get; set; }
         public int? TrainingSessionId { get; set; }
-        
+        public string TrainerStatus { get; set; } = "none";
         // Navigation properties
         public User? Requester { get; set; }
         public TrainingSession? TrainingSession { get; set; }

@@ -374,5 +374,64 @@ namespace TrainingAPI.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
+        [HttpPut("requests/{id}/trainerstatus")]
+        public async Task<ActionResult<TrainingRequest>> UpdateTrainingRequestTrainerStatus(int id, [FromBody] string trainerStatus)
+        {
+            try
+            {
+                var updatedRequest = await _trainingService.UpdateTrainingRequestTrainerStatusAsync(id, trainerStatus);
+                return Ok(updatedRequest);
+            }
+            catch (ArgumentException)
+            {
+                return NotFound();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating training request trainer status {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+        [HttpPut("requests/{id}")]
+        public async Task<ActionResult<TrainingRequest>> UpdateTrainingRequest(int id, [FromBody] TrainingRequest update)
+        {
+            try
+            {
+                var existing = await _trainingService.GetTrainingRequestByIdAsync(id);
+                if (existing == null) return NotFound();
+                // Only update TrainingSessionId for this use case
+                existing.TrainingSessionId = update.TrainingSessionId;
+                var updated = await _trainingService.UpdateTrainingRequestAsync(existing);
+                return Ok(updated);
+            }
+            catch (ArgumentException)
+            {
+                return NotFound();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating training request {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpPut("requests/{id}/session")]
+        public async Task<ActionResult<TrainingRequest>> UpdateTrainingRequestSession(int id, [FromBody] int trainingSessionId)
+        {
+            try
+            {
+                var updated = await _trainingService.UpdateTrainingRequestSessionAsync(id, trainingSessionId);
+                return Ok(updated);
+            }
+            catch (ArgumentException)
+            {
+                return NotFound();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating training request session {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
     }
 } 

@@ -28,6 +28,9 @@ namespace TrainingAPI.Services
         Task<IEnumerable<TrainingSession>> GetRegisteredSessionsByUserAsync(int userId);
         Task<IEnumerable<TrainingSession>> GetSessionsAsTrainerAsync(int userId);
         Task<TrainingSession?> UpdateTrainerRequestStatusAsync(int sessionId, string status);
+        Task<TrainingRequest> UpdateTrainingRequestTrainerStatusAsync(int id, string trainerStatus);
+        Task<TrainingRequest> UpdateTrainingRequestAsync(TrainingRequest request);
+        Task<TrainingRequest> UpdateTrainingRequestSessionAsync(int id, int trainingSessionId);
 
     }
 } 

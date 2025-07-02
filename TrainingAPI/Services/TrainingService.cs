@@ -251,5 +251,37 @@ namespace TrainingAPI.Services
             await JsonFileHelper.WriteListAsync(_sessionsFile, sessions);
             return sessions[idx];
         }
+        public async Task<TrainingRequest> UpdateTrainingRequestTrainerStatusAsync(int id, string trainerStatus)
+        {
+            var requests = await JsonFileHelper.ReadListAsync<TrainingRequest>(_requestsFile);
+            var idx = requests.FindIndex(r => r.Id == id);
+            if (idx == -1) throw new ArgumentException("Training request not found");
+            requests[idx].TrainerStatus = trainerStatus;
+            requests[idx].UpdatedAt = DateTime.UtcNow;
+            await JsonFileHelper.WriteListAsync(_requestsFile, requests);
+            return requests[idx];
+        }
+        public async Task<TrainingRequest> UpdateTrainingRequestAsync(TrainingRequest request)
+        {
+            var requests = await JsonFileHelper.ReadListAsync<TrainingRequest>(_requestsFile);
+            var idx = requests.FindIndex(r => r.Id == request.Id);
+            if (idx == -1) throw new ArgumentException("Training request not found");
+            requests[idx] = request;
+            requests[idx].UpdatedAt = DateTime.UtcNow;
+            await JsonFileHelper.WriteListAsync(_requestsFile, requests);
+            return requests[idx];
+        }
+
+        public async Task<TrainingRequest> UpdateTrainingRequestSessionAsync(int id, int trainingSessionId)
+        {
+            var requests = await JsonFileHelper.ReadListAsync<TrainingRequest>(_requestsFile);
+            var idx = requests.FindIndex(r => r.Id == id);
+            if (idx == -1) throw new ArgumentException("Training request not found");
+            requests[idx].TrainingSessionId = trainingSessionId;
+            requests[idx].Status = "scheduled";
+            requests[idx].UpdatedAt = DateTime.UtcNow;
+            await JsonFileHelper.WriteListAsync(_requestsFile, requests);
+            return requests[idx];
+        }
     }
 } 

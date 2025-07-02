@@ -15,10 +15,10 @@
     "Id": 2,
     "Name": "Bob Johnson",
     "Email": "bob@example.com",
-    "PasswordHash": "password2",
+    "PasswordHash": "",
     "Department": "HR",
     "RoleId": 2,
-    "CreatedAt": "2024-06-02T12:00:00Z",
+    "CreatedAt": "2025-07-02T14:39:19.6989975Z",
     "IsActive": true,
     "TrainingRequests": [],
     "Role": null
@@ -49,13 +49,13 @@
   },
   {
     "Id": 5,
-    "Name": "Eva Brown",
-    "Email": "eva@example.com",
-    "PasswordHash": "password5",
-    "Department": "L\u0026D",
-    "RoleId": 3,
-    "CreatedAt": "2024-06-05T12:00:00Z",
-    "IsActive": false,
+    "Name": "andrew",
+    "Email": "employee@demo.com",
+    "PasswordHash": "",
+    "Department": "IT",
+    "RoleId": 2,
+    "CreatedAt": "2025-07-02T14:40:42.3999185Z",
+    "IsActive": true,
     "TrainingRequests": [],
     "Role": null
   }
